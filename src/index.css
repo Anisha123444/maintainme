@@ -1,0 +1,147 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Default: Pastel Light Green Dominant Theme */
+    --color-bg: #D8ECD8;
+    --color-card: #FFFFFF;
+    --color-text: #1C2B1E;
+    --color-muted: #4F6B54;
+    --color-primary: #CBE6CB;
+    --color-accent: #FFE866;
+    --color-border: #BCD8BC;
+    --color-highlight: #E4F3E4;
+    --color-seal: #FF3860;
+  }
+
+  .theme-matcha, .theme-pastel-green {
+    --color-bg: #D8ECD8;
+    --color-card: #FFFFFF;
+    --color-text: #1C2B1E;
+    --color-muted: #4F6B54;
+    --color-primary: #CBE6CB;
+    --color-accent: #FFE866;
+    --color-border: #BCD8BC;
+    --color-highlight: #E4F3E4;
+    --color-seal: #FF3860;
+  }
+
+  .theme-strawberry {
+    --color-bg: #D8ECD8;
+    --color-card: #FFFFFF;
+    --color-text: #1C2B1E;
+    --color-muted: #4F6B54;
+    --color-primary: #FFD6E0;
+    --color-accent: #FFE866;
+    --color-border: #BCD8BC;
+    --color-highlight: #E4F3E4;
+    --color-seal: #FF3860;
+  }
+
+  .theme-butter {
+    --color-bg: #D8ECD8;
+    --color-card: #FFFFFF;
+    --color-text: #1C2B1E;
+    --color-muted: #4F6B54;
+    --color-primary: #FDF0A6;
+    --color-accent: #FFE866;
+    --color-border: #BCD8BC;
+    --color-highlight: #E4F3E4;
+    --color-seal: #FF3860;
+  }
+
+  .theme-blueberry {
+    --color-bg: #D8ECD8;
+    --color-card: #FFFFFF;
+    --color-text: #1C2B1E;
+    --color-muted: #4F6B54;
+    --color-primary: #D0E1FD;
+    --color-accent: #FFE866;
+    --color-border: #BCD8BC;
+    --color-highlight: #E4F3E4;
+    --color-seal: #FF3860;
+  }
+
+  .theme-peach {
+    --color-bg: #D8ECD8;
+    --color-card: #FFFFFF;
+    --color-text: #1C2B1E;
+    --color-muted: #4F6B54;
+    --color-primary: #FFE5D9;
+    --color-accent: #FFE866;
+    --color-border: #BCD8BC;
+    --color-highlight: #E4F3E4;
+    --color-seal: #FF3860;
+  }
+}
+
+/* Smooth UI Transitions */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Entire Site Light Green Background */
+body, html, #root {
+  background-color: #D8ECD8 !important;
+}
+
+/* Stationery Paper Texture Background (Pastel Light Green) */
+.paper-texture {
+  background-color: #D8ECD8;
+  background-image: 
+    radial-gradient(rgba(28, 43, 30, 0.04) 1.2px, transparent 0),
+    linear-gradient(to right, rgba(0, 0, 0, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.015) 1px, transparent 1px);
+  background-size: 24px 24px, 48px 48px, 48px 48px;
+}
+
+/* Ultra Smooth Stationery Card styling */
+.stationery-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 8px 32px -4px rgba(28, 43, 30, 0.06), inset 0 0 0 1px rgba(255, 255, 255, 0.95);
+  border-radius: 1.5rem;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.stationery-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 36px -4px rgba(28, 43, 30, 0.09), inset 0 0 0 1px rgba(255, 255, 255, 1);
+  border-color: #A4D0A4;
+}
+
+/* 3D Perspective for Coin Flip */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #FF3860;
+}
