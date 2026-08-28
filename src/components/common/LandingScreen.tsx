@@ -2,78 +2,77 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { motion } from 'framer-motion';
 import { MMLogo } from './MMLogo';
-import { ArrowRight, Sparkles } from 'lucide-react';
-import { SealStamp } from './SealStamp';
+import { ArrowRight } from 'lucide-react';
 
 export const LandingScreen: React.FC = () => {
   const { setHasEnteredLanding, profile } = useApp();
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const handleCoinClick = () => {
     setIsFlipped(!isFlipped);
   };
 
   const handleEnter = () => {
-    setHasEnteredLanding(true);
+    setIsFlipped(true);
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setHasEnteredLanding(true);
+    }, 650);
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-theme-bg paper-texture flex flex-col items-center justify-center p-6 select-none overflow-hidden">
-      {/* Decorative Stamps & Leaves */}
-      <div className="absolute top-6 left-6 pointer-events-none opacity-80">
-        <SealStamp text="MM" subtext="2026" size="md" />
-      </div>
-      <div className="absolute top-6 right-6 pointer-events-none text-3xl animate-float-leaf opacity-70">
-        🍃
-      </div>
-
-      {/* Ultra Clean Front Card */}
+      {/* Editorial Card Container */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
-        className="w-full max-w-sm bg-white/95 border-2 border-warm-green-300 rounded-3xl p-8 shadow-stationery text-center relative backdrop-blur-md flex flex-col items-center justify-center space-y-8"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        className="w-full max-w-sm bg-theme-card border border-theme-border rounded-3xl p-8 sm:p-10 shadow-paper text-center relative flex flex-col items-center justify-between min-h-[460px]"
       >
-        {/* Unique MM Logo */}
-        <div className="flex justify-center w-full pt-2">
-          <MMLogo size="xl" showTagline={true} />
+        {/* Editorial Logo */}
+        <div className="pt-2">
+          <MMLogo size="xl" showTagline={false} />
         </div>
 
-        {/* Interactive 3D MM Coin */}
+        {/* Minimal Tactile Coin */}
         <div
           onClick={handleCoinClick}
-          className="perspective-1000 cursor-pointer group my-2"
-          title="Tap to flip the MM coin!"
+          className="perspective-1000 cursor-pointer group my-6"
+          title="Tap to flip the MM coin"
         >
           <div
-            className={`w-28 h-28 relative transform-style-3d transition-transform duration-700 ease-out shadow-butter rounded-full border-4 border-stone-900 bg-gradient-to-br from-butter-200 via-butter-300 to-butter-500 flex items-center justify-center group-hover:scale-105 ${
+            className={`w-28 h-28 relative transform-style-3d transition-transform duration-700 ease-out shadow-coin rounded-full border-2 border-theme-border bg-gradient-to-br from-cream-100 via-beige-100 to-beige-200 flex items-center justify-center group-hover:scale-105 ${
               isFlipped ? 'rotate-y-180' : ''
             }`}
           >
-            {/* FRONT SIDE */}
+            {/* FRONT SIDE (MM Engraved) */}
             <div className="absolute inset-0 rounded-full flex flex-col items-center justify-center backface-hidden p-2">
-              <div className="w-20 h-20 rounded-full border-2 border-dashed border-stone-900/40 flex flex-col items-center justify-center bg-butter-300/40">
-                <span className="text-2xl font-black text-pop-pink font-sans tracking-tighter">MM</span>
+              <div className="w-20 h-20 rounded-full border border-dashed border-theme-border flex flex-col items-center justify-center bg-cream-100/50">
+                <span className="text-2xl font-serif font-bold text-theme-text tracking-tighter">MM</span>
               </div>
             </div>
 
-            {/* BACK SIDE */}
+            {/* BACK SIDE (Minimal ₹) */}
             <div className="absolute inset-0 rounded-full flex flex-col items-center justify-center backface-hidden rotate-y-180 p-2">
-              <div className="w-20 h-20 rounded-full border-2 border-dashed border-stone-900/40 flex flex-col items-center justify-center bg-butter-300/40">
-                <span className="text-3xl font-black text-stone-900 font-sans">{profile.currency || '₹'}</span>
+              <div className="w-20 h-20 rounded-full border border-dashed border-theme-border flex flex-col items-center justify-center bg-cream-100/50">
+                <span className="text-3xl font-serif font-bold text-theme-text">{profile.currency || '₹'}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Main CTA: Tap to Track */}
-        <button
-          onClick={handleEnter}
-          className="w-full py-4 bg-butter-400 hover:bg-butter-300 text-stone-900 font-black text-lg rounded-2xl shadow-butter border-2 border-stone-900 active:scale-95 transition-all flex items-center justify-center space-x-2"
-        >
-          <span>Tap to Track</span>
-          <ArrowRight className="w-5 h-5 stroke-[3]" />
-        </button>
+        {/* Primary CTA: Tap to track */}
+        <div className="w-full pb-2">
+          <button
+            onClick={handleEnter}
+            disabled={isTransitioning}
+            className="w-full py-3.5 bg-theme-primary hover:bg-theme-accent text-theme-text font-bold text-sm rounded-2xl border border-theme-border shadow-2xs active:scale-95 transition-all flex items-center justify-center space-x-2"
+          >
+            <span>Tap to track</span>
+            <ArrowRight className="w-4 h-4 text-theme-muted" />
+          </button>
+        </div>
       </motion.div>
     </div>
   );

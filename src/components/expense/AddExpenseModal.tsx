@@ -3,8 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { Modal } from '../common/Modal';
 import { ExpenseCategory, PaymentMethod } from '../../types';
 import { getTodayISO } from '../../utils/dateUtils';
-import confetti from 'canvas-confetti';
-import { Check, Sparkles, Wallet } from 'lucide-react';
+import { Check, Sparkles } from 'lucide-react';
 import { CategoryBadge } from './CategoryBadge';
 
 const DEFAULT_CATEGORIES: ExpenseCategory[] = [
@@ -52,7 +51,7 @@ export const AddExpenseModal: React.FC = () => {
   const [time, setTime] = useState('12:00');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('UPI');
   const [note, setNote] = useState('');
-  const [showCoinDropAnimation, setShowCoinDropAnimation] = useState(false);
+  const [showSavedToast, setShowSavedToast] = useState(false);
 
   useEffect(() => {
     if (editingExpense) {
@@ -108,24 +107,13 @@ export const AddExpenseModal: React.FC = () => {
         paymentMethod,
         note: note.trim(),
       });
-
-      // Micro-confetti burst
-      try {
-        confetti({
-          particleCount: 20,
-          spread: 40,
-          origin: { y: 0.8 },
-          colors: ['#FFE866', '#F0F7F4', '#FFD6E0'],
-        });
-      } catch (e) {}
     }
 
-    // Playful Coin drop into wallet animation
-    setShowCoinDropAnimation(true);
+    setShowSavedToast(true);
     setTimeout(() => {
-      setShowCoinDropAnimation(false);
+      setShowSavedToast(false);
       handleClose();
-    }, 850);
+    }, 650);
   };
 
   return (
@@ -135,29 +123,24 @@ export const AddExpenseModal: React.FC = () => {
       title={editingExpense ? 'Edit expense' : 'Add expense'}
     >
       <form onSubmit={handleSave} className="space-y-4 relative">
-        {/* Coin drop into wallet micro-animation overlay */}
-        {showCoinDropAnimation && (
+        {/* Saved to MM confirmation overlay */}
+        {showSavedToast && (
           <div className="absolute inset-0 z-20 bg-theme-card/95 backdrop-blur-md rounded-3xl flex flex-col items-center justify-center p-6 text-center animate-fade-in">
-            <div className="relative w-20 h-20 flex items-center justify-center mb-2">
-              {/* Coin */}
-              <div className="absolute top-0 w-8 h-8 rounded-full bg-butter-300 border-2 border-butter-500 font-black text-xs text-stone-900 flex items-center justify-center shadow-butter animate-coin-drop">
-                {profile.currency || '₹'}
-              </div>
-              {/* Wallet */}
-              <div className="mt-6 text-4xl">👛</div>
+            <div className="w-14 h-14 bg-theme-primary border border-theme-border rounded-full flex items-center justify-center mb-2">
+              <Check className="w-7 h-7 text-theme-text stroke-[2.5]" />
             </div>
-            <h4 className="text-xl font-extrabold text-theme-text font-sans">Money logged.</h4>
-            <p className="text-xs text-theme-muted font-serif mt-0.5">Added to MM Journal 🪙</p>
+            <h4 className="text-lg font-serif font-bold text-theme-text">Saved to MM</h4>
+            <p className="text-xs text-theme-muted font-serif italic mt-0.5">Your month is updated.</p>
           </div>
         )}
 
         {/* Amount */}
         <div>
-          <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1">
+          <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1 font-sans">
             Amount ({profile.currency}) *
           </label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-extrabold text-theme-muted">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-serif font-bold text-theme-muted">
               {profile.currency}
             </span>
             <input
@@ -168,35 +151,35 @@ export const AddExpenseModal: React.FC = () => {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
-              className="w-full pl-10 pr-4 py-3 bg-theme-bg border-2 border-theme-border focus:border-butter-400 rounded-2xl text-2xl font-extrabold text-theme-text outline-none transition-all"
+              className="w-full pl-10 pr-4 py-3 bg-theme-bg border-2 border-theme-border focus:border-theme-accent rounded-2xl text-2xl font-serif font-bold text-theme-text outline-none transition-all"
             />
           </div>
         </div>
 
-        {/* What was it? (Name) */}
+        {/* What was it? */}
         <div>
-          <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1">
+          <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1 font-sans">
             What was it? (Optional)
           </label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Strawberry Café, Metro Pass..."
-            className="w-full px-4 py-2.5 bg-theme-bg border border-theme-border focus:border-butter-400 rounded-xl text-sm font-medium text-theme-text outline-none transition-all"
+            placeholder="e.g. Tea & snack, Transit pass..."
+            className="w-full px-4 py-2.5 bg-theme-bg border border-theme-border focus:border-theme-accent rounded-xl text-sm font-medium text-theme-text outline-none transition-all"
           />
         </div>
 
         {/* Category Picker */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider">
+            <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider font-sans">
               Category
             </label>
             <button
               type="button"
               onClick={() => setIsAddingCustomCategory(!isAddingCustomCategory)}
-              className="text-xs font-bold text-stone-700 hover:underline"
+              className="text-xs font-bold text-theme-muted hover:text-theme-text hover:underline"
             >
               {isAddingCustomCategory ? 'Choose Preset' : '+ Custom Category'}
             </button>
@@ -208,7 +191,7 @@ export const AddExpenseModal: React.FC = () => {
               value={customCategory}
               onChange={(e) => setCustomCategory(e.target.value)}
               placeholder="Enter custom category name..."
-              className="w-full px-4 py-2.5 bg-theme-bg border border-theme-border focus:border-butter-400 rounded-xl text-sm font-medium text-theme-text outline-none"
+              className="w-full px-4 py-2.5 bg-theme-bg border border-theme-border focus:border-theme-accent rounded-xl text-sm font-medium text-theme-text outline-none"
             />
           ) : (
             <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-2 bg-theme-bg border border-theme-border rounded-2xl">
@@ -218,7 +201,7 @@ export const AddExpenseModal: React.FC = () => {
                   type="button"
                   onClick={() => setCategory(cat)}
                   className={`transition-all ${
-                    category === cat ? 'scale-105 ring-2 ring-butter-500 rounded-full' : 'opacity-80 hover:opacity-100'
+                    category === cat ? 'scale-105 ring-2 ring-theme-accent rounded-full' : 'opacity-80 hover:opacity-100'
                   }`}
                 >
                   <CategoryBadge category={cat} size="sm" />
@@ -231,7 +214,7 @@ export const AddExpenseModal: React.FC = () => {
         {/* Date & Time */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1">
+            <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1 font-sans">
               Date
             </label>
             <input
@@ -243,7 +226,7 @@ export const AddExpenseModal: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1">
+            <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1 font-sans">
               Payment Method
             </label>
             <select
@@ -262,7 +245,7 @@ export const AddExpenseModal: React.FC = () => {
 
         {/* Note */}
         <div>
-          <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1">
+          <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1 font-sans">
             Note (Optional)
           </label>
           <input
@@ -270,16 +253,16 @@ export const AddExpenseModal: React.FC = () => {
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Add a small journal note..."
-            className="w-full px-4 py-2 bg-theme-bg border border-theme-border focus:border-butter-400 rounded-xl text-xs font-medium text-theme-text outline-none"
+            className="w-full px-4 py-2 bg-theme-bg border border-theme-border focus:border-theme-accent rounded-xl text-xs font-medium text-theme-text outline-none"
           />
         </div>
 
         {/* Submit Button */}
         <button
           type="submit"
-          className="w-full py-3.5 bg-butter-400 hover:bg-butter-300 text-stone-900 font-extrabold text-base rounded-2xl shadow-butter border border-butter-500 active:scale-95 transition-all flex items-center justify-center space-x-2 mt-4"
+          className="w-full py-3.5 bg-theme-primary hover:bg-theme-accent text-theme-text font-bold text-sm rounded-2xl border border-theme-border shadow-2xs active:scale-95 transition-all flex items-center justify-center space-x-2 mt-4"
         >
-          <Sparkles className="w-5 h-5" />
+          <Sparkles className="w-4 h-4 text-theme-muted" />
           <span>{editingExpense ? 'Update Expense' : 'Save Expense'}</span>
         </button>
       </form>

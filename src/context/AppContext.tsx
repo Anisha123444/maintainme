@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
+  AppearanceMode,
   BackupData,
   Expense,
   Frequency,
@@ -7,10 +8,7 @@ import {
   RecurringPayment,
   SavingsGoal,
   Settings,
-  StickerDensity,
-  StickerType,
   TabType,
-  ThemeName,
   UserProfile,
 } from '../types';
 import {
@@ -93,10 +91,7 @@ const DEFAULT_PROFILE: UserProfile = {
 };
 
 const DEFAULT_SETTINGS: Settings = {
-  theme: 'matcha', // Light Green theme
-  stickerEnabled: true,
-  stickerDensity: 'normal',
-  selectedStickers: ['strawberry', 'coin', 'wallet', 'money_plant', 'sparkle'],
+  mode: 'light',
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -121,7 +116,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Settings from localStorage
   const [settings, setSettings] = useState<Settings>(() => {
     const saved = localStorage.getItem('mm_settings');
-    return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return { mode: parsed.mode || 'light' };
+    }
+    return DEFAULT_SETTINGS;
   });
 
   // IndexedDB States (Clean 100% empty!)
@@ -129,12 +128,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [recurring, setRecurring] = useState<RecurringPayment[]>([]);
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
 
-  // Apply Theme class to document root
+  // Apply Light / Dark class to document root
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.remove('theme-strawberry', 'theme-matcha', 'theme-butter', 'theme-blueberry', 'theme-peach', 'theme-pastel-green');
-    root.classList.add(`theme-${settings.theme}`);
-  }, [settings.theme]);
+    if (settings.mode === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+  }, [settings.mode]);
 
   // Load user data from IndexedDB and PURGE any sample/bot data left in IndexedDB
   useEffect(() => {
@@ -150,12 +152,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const hasSampleGoals = loadedGoals.some((g) => g.id.startsWith('goal-'));
 
         if (hasSampleExpenses || hasSampleRecurring || hasSampleGoals) {
-          // Filter out sample data
           loadedExpenses = loadedExpenses.filter((e) => !e.id.startsWith('sample-'));
           loadedRecurring = loadedRecurring.filter((r) => !r.id.startsWith('rec-'));
           loadedGoals = loadedGoals.filter((g) => !g.id.startsWith('goal-'));
-
-          // Restore clean data to IndexedDB
           await dbRestoreAllData(loadedExpenses, loadedRecurring, loadedGoals);
         }
 
@@ -297,7 +296,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         localStorage.setItem('mm_profile', JSON.stringify(data.profile));
       }
       if (data.settings) {
-        setSettings(data.settings);
+        setSettings({ mode: data.settings.mode || 'light' });
         localStorage.setItem('mm_settings', JSON.stringify(data.settings));
       }
 

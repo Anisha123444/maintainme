@@ -4,113 +4,64 @@
 
 @layer base {
   :root {
-    /* Default: Pastel Light Green Dominant Theme */
-    --color-bg: #D8ECD8;
-    --color-card: #FFFFFF;
-    --color-text: #1C2B1E;
-    --color-muted: #4F6B54;
-    --color-primary: #CBE6CB;
-    --color-accent: #FFE866;
-    --color-border: #BCD8BC;
-    --color-highlight: #E4F3E4;
-    --color-seal: #FF3860;
+    /* Light Mode: Warm Ivory & Sage Editorial Paper */
+    --color-bg: #F5F1E7;
+    --color-card: #FFFDF8;
+    --color-text: #292824;
+    --color-muted: #68745F;
+    --color-primary: #E3E9DC;
+    --color-accent: #9DAA8D;
+    --color-border: #D8CCB5;
+    --color-highlight: #EAE3D3;
+    --color-terracotta: #A85D4A;
   }
 
-  .theme-matcha, .theme-pastel-green {
-    --color-bg: #D8ECD8;
-    --color-card: #FFFFFF;
-    --color-text: #1C2B1E;
-    --color-muted: #4F6B54;
-    --color-primary: #CBE6CB;
-    --color-accent: #FFE866;
-    --color-border: #BCD8BC;
-    --color-highlight: #E4F3E4;
-    --color-seal: #FF3860;
-  }
-
-  .theme-strawberry {
-    --color-bg: #D8ECD8;
-    --color-card: #FFFFFF;
-    --color-text: #1C2B1E;
-    --color-muted: #4F6B54;
-    --color-primary: #FFD6E0;
-    --color-accent: #FFE866;
-    --color-border: #BCD8BC;
-    --color-highlight: #E4F3E4;
-    --color-seal: #FF3860;
-  }
-
-  .theme-butter {
-    --color-bg: #D8ECD8;
-    --color-card: #FFFFFF;
-    --color-text: #1C2B1E;
-    --color-muted: #4F6B54;
-    --color-primary: #FDF0A6;
-    --color-accent: #FFE866;
-    --color-border: #BCD8BC;
-    --color-highlight: #E4F3E4;
-    --color-seal: #FF3860;
-  }
-
-  .theme-blueberry {
-    --color-bg: #D8ECD8;
-    --color-card: #FFFFFF;
-    --color-text: #1C2B1E;
-    --color-muted: #4F6B54;
-    --color-primary: #D0E1FD;
-    --color-accent: #FFE866;
-    --color-border: #BCD8BC;
-    --color-highlight: #E4F3E4;
-    --color-seal: #FF3860;
-  }
-
-  .theme-peach {
-    --color-bg: #D8ECD8;
-    --color-card: #FFFFFF;
-    --color-text: #1C2B1E;
-    --color-muted: #4F6B54;
-    --color-primary: #FFE5D9;
-    --color-accent: #FFE866;
-    --color-border: #BCD8BC;
-    --color-highlight: #E4F3E4;
-    --color-seal: #FF3860;
+  .dark {
+    /* Dark Mode: Warm Charcoal Editorial Paper */
+    --color-bg: #1E1D19;
+    --color-card: #292824;
+    --color-text: #F5F1E7;
+    --color-muted: #9DAA8D;
+    --color-primary: #3D3B35;
+    --color-accent: #68745F;
+    --color-border: #3D3B35;
+    --color-highlight: #292824;
+    --color-terracotta: #C46D58;
   }
 }
 
-/* Smooth UI Transitions */
+/* Smooth Editorial Transitions */
 * {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Entire Site Light Green Background */
+/* Subtle Paper Background Texture */
 body, html, #root {
-  background-color: #D8ECD8 !important;
+  background-color: var(--color-bg) !important;
+  color: var(--color-text);
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 
-/* Stationery Paper Texture Background (Pastel Light Green) */
 .paper-texture {
-  background-color: #D8ECD8;
+  background-color: var(--color-bg);
   background-image: 
-    radial-gradient(rgba(28, 43, 30, 0.04) 1.2px, transparent 0),
-    linear-gradient(to right, rgba(0, 0, 0, 0.015) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.015) 1px, transparent 1px);
-  background-size: 24px 24px, 48px 48px, 48px 48px;
+    radial-gradient(rgba(41, 40, 36, 0.03) 1.2px, transparent 0),
+    linear-gradient(to right, rgba(0, 0, 0, 0.01) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.01) 1px, transparent 1px);
+  background-size: 28px 28px, 56px 56px, 56px 56px;
 }
 
-/* Ultra Smooth Stationery Card styling */
+/* Editorial Paper Card Styling */
 .stationery-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
+  background: var(--color-card);
   border: 1px solid var(--color-border);
-  box-shadow: 0 8px 32px -4px rgba(28, 43, 30, 0.06), inset 0 0 0 1px rgba(255, 255, 255, 0.95);
-  border-radius: 1.5rem;
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  box-shadow: 0 4px 20px -2px rgba(41, 40, 36, 0.04);
+  border-radius: 1.25rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .stationery-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 36px -4px rgba(28, 43, 30, 0.09), inset 0 0 0 1px rgba(255, 255, 255, 1);
-  border-color: #A4D0A4;
+  box-shadow: 0 8px 28px -4px rgba(41, 40, 36, 0.07);
 }
 
 /* 3D Perspective for Coin Flip */
@@ -130,10 +81,10 @@ body, html, #root {
   transform: rotateY(180deg);
 }
 
-/* Custom scrollbars */
+/* Custom Minimal Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -143,5 +94,5 @@ body, html, #root {
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #FF3860;
+  background: var(--color-accent);
 }

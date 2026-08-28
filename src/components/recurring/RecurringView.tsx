@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Frequency, RecurringPayment } from '../../types';
-import { formatCurrency, formatDateDisplay, getTodayISO } from '../../utils/dateUtils';
+import { formatCurrency, getTodayISO } from '../../utils/dateUtils';
 import { Modal } from '../common/Modal';
-import { StickerOverlay } from '../common/StickerOverlay';
-import { Repeat, Plus, Bell, BellOff, Edit2, Trash2, Calendar, AlertCircle } from 'lucide-react';
+import { Repeat, Plus, Edit2, Trash2, Calendar, AlertCircle } from 'lucide-react';
 import { CategoryBadge } from '../expense/CategoryBadge';
 
 export const RecurringView: React.FC = () => {
@@ -69,34 +68,30 @@ export const RecurringView: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  // Days until next due date calculation
   const getDaysUntil = (dateStr: string) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const target = new Date(dateStr);
-    const diff = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    return diff;
+    return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   };
 
   return (
     <div className="space-y-6 pb-24 lg:pb-12">
       {/* Header */}
       <div className="stationery-card p-6 relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-4">
-        <StickerOverlay position="top-right" sticker="calendar" size="md" />
-
         <div className="flex items-center space-x-3">
-          <div className="p-3 bg-theme-primary rounded-2xl text-strawberry-600">
-            <Repeat className="w-6 h-6" />
+          <div className="p-3 bg-theme-primary/60 rounded-2xl text-theme-text border border-theme-border">
+            <Repeat className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold font-sans text-theme-text">Recurring Payments</h2>
-            <p className="text-xs text-theme-muted font-serif">Subscriptions, rent, wifi & monthly commitments</p>
+            <h2 className="text-2xl font-serif font-bold text-theme-text">Recurring Payments</h2>
+            <p className="text-xs text-theme-muted font-serif italic">Subscriptions, rent, wifi & commitments</p>
           </div>
         </div>
 
         <button
           onClick={handleOpenAdd}
-          className="px-5 py-2.5 bg-theme-accent text-white font-bold text-xs rounded-2xl shadow-float hover:opacity-90 active:scale-95 transition-all flex items-center space-x-2"
+          className="px-4 py-2.5 bg-theme-primary hover:bg-theme-accent text-theme-text font-bold text-xs rounded-2xl border border-theme-border shadow-2xs active:scale-95 transition-all flex items-center space-x-2"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
           <span>Add Recurring Payment</span>
@@ -105,15 +100,17 @@ export const RecurringView: React.FC = () => {
 
       {/* List */}
       {recurring.length === 0 ? (
-        <div className="stationery-card p-12 text-center">
-          <div className="text-4xl mb-3">📅</div>
-          <h3 className="text-lg font-bold text-theme-text">No recurring payments yet</h3>
-          <p className="text-xs text-theme-muted font-serif mt-1">
-            Track Netflix, rent, wifi, or mobile recharges to never miss a due date.
+        <div className="stationery-card p-12 text-center space-y-3">
+          <div className="w-12 h-12 mx-auto bg-theme-primary/50 border border-theme-border rounded-full flex items-center justify-center text-theme-muted">
+            <Repeat className="w-5 h-5" />
+          </div>
+          <h3 className="text-lg font-serif font-bold text-theme-text">No recurring payments yet</h3>
+          <p className="text-xs text-theme-muted font-serif italic max-w-xs mx-auto">
+            Track rent, wifi, or mobile recharges to maintain your commitments.
           </p>
           <button
             onClick={handleOpenAdd}
-            className="mt-4 px-4 py-2 bg-theme-accent text-white font-bold text-xs rounded-xl shadow-sm"
+            className="mt-2 px-4 py-2 bg-theme-primary hover:bg-theme-accent text-theme-text font-bold text-xs rounded-xl border border-theme-border shadow-2xs"
           >
             + Add First Recurring Payment
           </button>
@@ -127,7 +124,7 @@ export const RecurringView: React.FC = () => {
             return (
               <div
                 key={item.id}
-                className="stationery-card p-5 flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow relative"
+                className="stationery-card p-5 flex flex-col justify-between space-y-4 hover:shadow-paper-hover transition-shadow relative"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
@@ -140,7 +137,7 @@ export const RecurringView: React.FC = () => {
                     </div>
                   </div>
 
-                  <span className="text-lg font-black text-strawberry-600">
+                  <span className="text-lg font-serif font-bold text-theme-terracotta">
                     {formatCurrency(item.amount, profile.currency)}
                   </span>
                 </div>
@@ -148,21 +145,21 @@ export const RecurringView: React.FC = () => {
                 <div className="flex items-center justify-between pt-3 border-t border-theme-border text-xs">
                   <div className="flex items-center space-x-2">
                     <Calendar className="w-4 h-4 text-theme-muted" />
-                    <span className="text-theme-muted">Next date: {item.nextDate}</span>
+                    <span className="text-theme-muted font-mono">Next: {item.nextDate}</span>
                   </div>
 
                   <div className="flex items-center space-x-2">
                     {isDueSoon ? (
-                      <span className="px-2 py-0.5 bg-rose-100 text-rose-800 font-extrabold rounded-full text-[10px] flex items-center space-x-1">
+                      <span className="px-2 py-0.5 bg-terracotta-100 text-theme-terracotta font-bold rounded-full text-[10px] flex items-center space-x-1 border border-terracotta-200">
                         <AlertCircle className="w-3 h-3" />
                         <span>Due in {daysLeft} days</span>
                       </span>
                     ) : daysLeft < 0 ? (
-                      <span className="px-2 py-0.5 bg-rose-200 text-rose-900 font-extrabold rounded-full text-[10px]">
+                      <span className="px-2 py-0.5 bg-terracotta-200 text-theme-terracotta font-bold rounded-full text-[10px]">
                         Overdue ({Math.abs(daysLeft)} days)
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-extrabold rounded-full text-[10px]">
+                      <span className="px-2 py-0.5 bg-theme-primary/60 text-theme-text font-bold rounded-full text-[10px] border border-theme-border">
                         Due in {daysLeft} days
                       </span>
                     )}
@@ -176,7 +173,7 @@ export const RecurringView: React.FC = () => {
                     </button>
                     <button
                       onClick={() => deleteRecurring(item.id)}
-                      className="p-1 text-theme-muted hover:text-rose-600"
+                      className="p-1 text-theme-muted hover:text-theme-terracotta"
                       title="Delete"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -197,7 +194,7 @@ export const RecurringView: React.FC = () => {
       >
         <form onSubmit={handleSave} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1">
+            <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1 font-sans">
               Title / Name *
             </label>
             <input
@@ -211,7 +208,7 @@ export const RecurringView: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1">
+            <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1 font-sans">
               Amount ({profile.currency}) *
             </label>
             <input
@@ -226,7 +223,7 @@ export const RecurringView: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1">
+              <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1 font-sans">
                 Category
               </label>
               <select
@@ -244,7 +241,7 @@ export const RecurringView: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1">
+              <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1 font-sans">
                 Frequency
               </label>
               <select
@@ -260,7 +257,7 @@ export const RecurringView: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1">
+            <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1 font-sans">
               Next Due Date
             </label>
             <input
@@ -272,22 +269,9 @@ export const RecurringView: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center space-x-2 pt-2">
-            <input
-              type="checkbox"
-              id="reminderCheck"
-              checked={reminder}
-              onChange={(e) => setReminder(e.target.checked)}
-              className="w-4 h-4 text-strawberry-600 rounded"
-            />
-            <label htmlFor="reminderCheck" className="text-xs font-semibold text-theme-text">
-              Enable upcoming due date reminders
-            </label>
-          </div>
-
           <button
             type="submit"
-            className="w-full py-3.5 bg-theme-accent text-white font-bold rounded-2xl shadow-float hover:opacity-90 transition-all mt-4"
+            className="w-full py-3.5 bg-theme-primary hover:bg-theme-accent text-theme-text font-bold rounded-2xl border border-theme-border shadow-2xs transition-all mt-4"
           >
             Save Recurring Payment
           </button>

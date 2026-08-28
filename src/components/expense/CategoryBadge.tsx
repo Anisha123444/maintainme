@@ -71,9 +71,9 @@ export const CategoryBadge: React.FC<CategoryBadgeProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center font-medium rounded-full bg-theme-primary text-theme-text border border-theme-border shadow-2xs select-none ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center font-bold rounded-full bg-theme-primary/50 text-theme-text border border-theme-border select-none ${sizeClasses[size]} ${className}`}
     >
-      {showIcon && <Icon className={`${iconSizes[size]} text-strawberry-600`} />}
+      {showIcon && <Icon className={`${iconSizes[size]} text-theme-muted stroke-[1.8]`} />}
       <span className="truncate">{category}</span>
     </span>
   );

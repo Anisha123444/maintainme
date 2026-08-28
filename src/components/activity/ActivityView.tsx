@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { CategoryBadge } from '../expense/CategoryBadge';
 import { formatCurrency, formatDateDisplay } from '../../utils/dateUtils';
-import { StickerOverlay } from '../common/StickerOverlay';
-import { Search, Filter, Edit2, Trash2, X, Plus } from 'lucide-react';
-import { Expense, ExpenseCategory, PaymentMethod } from '../../types';
+import { Search, Edit2, Trash2, X, Plus, Receipt } from 'lucide-react';
+import { Expense } from '../../types';
 
 export const ActivityView: React.FC = () => {
   const {
@@ -22,9 +21,7 @@ export const ActivityView: React.FC = () => {
   const [minAmount, setMinAmount] = useState<string>('');
   const [maxAmount, setMaxAmount] = useState<string>('');
 
-  // Filter expenses
   const filteredExpenses = expenses.filter((e) => {
-    // Search query match title, note, category
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const matchTitle = e.title.toLowerCase().includes(q);
@@ -33,20 +30,14 @@ export const ActivityView: React.FC = () => {
       if (!matchTitle && !matchCategory && !matchNote) return false;
     }
 
-    // Category filter
     if (selectedCategory !== 'ALL' && e.category !== selectedCategory) return false;
-
-    // Payment method filter
     if (selectedPayment !== 'ALL' && e.paymentMethod !== selectedPayment) return false;
-
-    // Amount range filter
     if (minAmount && e.amount < parseFloat(minAmount)) return false;
     if (maxAmount && e.amount > parseFloat(maxAmount)) return false;
 
     return true;
   });
 
-  // Group by date
   const groupedByDate: Record<string, Expense[]> = {};
   filteredExpenses.forEach((e) => {
     if (!groupedByDate[e.date]) {
@@ -59,24 +50,22 @@ export const ActivityView: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-24 lg:pb-12">
-      {/* Top Header & Search Bar */}
+      {/* Search Header */}
       <div className="stationery-card p-6 relative overflow-hidden space-y-4">
-        <StickerOverlay position="top-right" sticker="notebook" size="md" />
-
         <div>
-          <h2 className="text-2xl font-bold font-sans text-theme-text">Activity</h2>
-          <p className="text-xs text-theme-muted font-serif">Complete financial timeline & ledger</p>
+          <h2 className="text-2xl font-serif font-bold text-theme-text">Activity Timeline</h2>
+          <p className="text-xs text-theme-muted font-serif italic">Complete money ledger & journal entries</p>
         </div>
 
-        {/* Live Search Bar */}
+        {/* Live Search */}
         <div className="relative">
-          <Search className="w-5 h-5 text-theme-muted absolute left-4 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-theme-muted absolute left-4 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search transactions, notes, or categories..."
-            className="w-full pl-12 pr-10 py-3 bg-theme-bg border border-theme-border focus:border-theme-accent rounded-2xl text-sm font-medium text-theme-text outline-none transition-all"
+            className="w-full pl-11 pr-10 py-3 bg-theme-bg border border-theme-border focus:border-theme-accent rounded-2xl text-sm font-medium text-theme-text outline-none transition-all"
           />
           {searchQuery && (
             <button
@@ -88,9 +77,8 @@ export const ActivityView: React.FC = () => {
           )}
         </div>
 
-        {/* Filter Controls */}
+        {/* Filters */}
         <div className="flex flex-wrap gap-2 pt-2 border-t border-theme-border text-xs">
-          {/* Category Filter */}
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
@@ -115,7 +103,6 @@ export const ActivityView: React.FC = () => {
             <option value="Other">Other</option>
           </select>
 
-          {/* Payment Method Filter */}
           <select
             value={selectedPayment}
             onChange={(e) => setSelectedPayment(e.target.value)}
@@ -129,7 +116,6 @@ export const ActivityView: React.FC = () => {
             <option value="Wallet">Wallet</option>
           </select>
 
-          {/* Min & Max Amount */}
           <input
             type="number"
             value={minAmount}
@@ -153,7 +139,7 @@ export const ActivityView: React.FC = () => {
                 setMinAmount('');
                 setMaxAmount('');
               }}
-              className="px-2.5 py-1.5 text-strawberry-600 font-bold hover:underline"
+              className="px-2.5 py-1.5 text-theme-terracotta font-bold hover:underline"
             >
               Reset Filters
             </button>
@@ -163,15 +149,17 @@ export const ActivityView: React.FC = () => {
 
       {/* Timeline List */}
       {sortedDates.length === 0 ? (
-        <div className="stationery-card p-12 text-center">
-          <div className="text-4xl mb-3">🍃</div>
-          <h3 className="text-lg font-bold text-theme-text">No expenses found</h3>
-          <p className="text-xs text-theme-muted font-serif mt-1">
+        <div className="stationery-card p-12 text-center space-y-3">
+          <div className="w-12 h-12 mx-auto bg-theme-primary/50 border border-theme-border rounded-full flex items-center justify-center text-theme-muted">
+            <Receipt className="w-5 h-5" />
+          </div>
+          <h3 className="text-lg font-serif font-bold text-theme-text">No expenses found</h3>
+          <p className="text-xs text-theme-muted font-serif italic max-w-xs mx-auto">
             Try adjusting your search query or filters.
           </p>
           <button
             onClick={() => setIsAddExpenseOpen(true)}
-            className="mt-4 px-4 py-2 bg-theme-accent text-white font-bold text-xs rounded-xl shadow-sm hover:opacity-90"
+            className="mt-2 px-4 py-2 bg-theme-primary hover:bg-theme-accent text-theme-text font-bold text-xs rounded-xl border border-theme-border shadow-2xs"
           >
             + Add New Expense
           </button>
@@ -184,18 +172,16 @@ export const ActivityView: React.FC = () => {
 
             return (
               <div key={dateStr} className="space-y-2">
-                {/* Date Group Header */}
-                <div className="flex items-center justify-between px-2 text-xs font-bold text-theme-muted uppercase tracking-wider">
+                <div className="flex items-center justify-between px-2 text-[11px] font-bold text-theme-muted uppercase tracking-widest font-sans">
                   <span>{formatDateDisplay(dateStr)}</span>
                   <span>Total: {formatCurrency(dateTotal, profile.currency)}</span>
                 </div>
 
-                {/* Expenses in date */}
                 <div className="space-y-2">
                   {dateExps.map((exp) => (
                     <div
                       key={exp.id}
-                      className="stationery-card p-4 flex items-center justify-between hover:shadow-md transition-shadow group"
+                      className="stationery-card p-4 flex items-center justify-between hover:shadow-paper-hover transition-shadow group"
                     >
                       <div className="flex items-center space-x-3">
                         <CategoryBadge category={exp.category} size="md" />
@@ -208,7 +194,7 @@ export const ActivityView: React.FC = () => {
                       </div>
 
                       <div className="flex items-center space-x-3">
-                        <span className="text-base font-extrabold text-strawberry-600">
+                        <span className="text-base font-extrabold text-theme-terracotta">
                           -{formatCurrency(exp.amount, profile.currency)}
                         </span>
                         <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1 transition-opacity">
@@ -224,7 +210,7 @@ export const ActivityView: React.FC = () => {
                           </button>
                           <button
                             onClick={() => deleteExpense(exp.id)}
-                            className="p-1 text-theme-muted hover:text-rose-600"
+                            className="p-1 text-theme-muted hover:text-theme-terracotta"
                             title="Delete"
                           >
                             <Trash2 className="w-3.5 h-3.5" />

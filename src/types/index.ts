@@ -72,32 +72,10 @@ export interface UserProfile {
   onboardingCompleted: boolean;
 }
 
-export type ThemeName = 'matcha' | 'strawberry' | 'butter' | 'blueberry' | 'peach';
-
-export type StickerDensity = 'minimal' | 'normal' | 'decorated';
-
-export type StickerType =
-  | 'strawberry'
-  | 'flower'
-  | 'wallet'
-  | 'coin'
-  | 'calculator'
-  | 'calendar'
-  | 'money_plant'
-  | 'coffee'
-  | 'envelope'
-  | 'star'
-  | 'sparkle'
-  | 'bow'
-  | 'leaf'
-  | 'notebook'
-  | 'piggy_bank';
+export type AppearanceMode = 'light' | 'dark';
 
 export interface Settings {
-  theme: ThemeName;
-  stickerEnabled: boolean;
-  stickerDensity: StickerDensity;
-  selectedStickers: StickerType[];
+  mode: AppearanceMode;
 }
 
 export interface BackupData {
