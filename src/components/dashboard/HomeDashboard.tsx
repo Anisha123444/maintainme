@@ -16,7 +16,9 @@ import {
   Edit2,
   Trash2,
   Receipt,
-  Leaf,
+  HandCoins,
+  ArrowUpRight,
+  ArrowDownLeft,
 } from 'lucide-react';
 import { CategoryBreakdown, getCategoryBreakdown } from '../../utils/insights';
 
@@ -26,6 +28,8 @@ export const HomeDashboard: React.FC = () => {
     expenses,
     recurring,
     goals,
+    lendRecords,
+    borrowRecords,
     setActiveTab,
     setIsAddExpenseOpen,
     setEditingExpense,
@@ -41,7 +45,26 @@ export const HomeDashboard: React.FC = () => {
   const totalSpent = currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
   const categoryBreakdown: CategoryBreakdown[] = getCategoryBreakdown(currentMonthExpenses);
   const recentExpenses = expenses.slice(0, 5);
-  const upcomingRecurring = recurring.slice(0, 3);
+
+  // Lend & Borrow Overview Calculations (Separate from expenses)
+  const totalLent = lendRecords.reduce((sum, l) => sum + l.amount, 0);
+  const totalLentReturned = lendRecords.reduce((sum, l) => sum + (l.returnedAmount || 0), 0);
+  const toReceive = Math.max(0, totalLent - totalLentReturned);
+
+  const totalBorrowed = borrowRecords.reduce((sum, b) => sum + b.amount, 0);
+  const totalBorrowedPaid = borrowRecords.reduce((sum, b) => sum + (b.paidAmount || 0), 0);
+  const toPay = Math.max(0, totalBorrowed - totalBorrowedPaid);
+
+  // Bills Summary
+  const pendingBills = recurring.filter((r) => r.status !== 'paid');
+  const pendingBillsTotal = pendingBills.reduce((sum, r) => sum + r.amount, 0);
+
+  // Goals Summary
+  const totalGoalTarget = goals.reduce((sum, g) => sum + g.target, 0);
+  const totalGoalCurrent = goals.reduce((sum, g) => sum + g.current, 0);
+  const overallGoalPct = totalGoalTarget > 0 ? Math.min(100, Math.round((totalGoalCurrent / totalGoalTarget) * 100)) : 0;
+
+  const upcomingRecurring = pendingBills.slice(0, 3);
   const activeGoals = goals.slice(0, 2);
 
   return (
@@ -86,6 +109,67 @@ export const HomeDashboard: React.FC = () => {
 
       {/* Spending Status Card */}
       <SpendingStatusCard totalSpent={totalSpent} />
+
+      {/* OVERVIEW SUMMARY WIDGETS (Lend/Borrow, Bills & Goals Overview) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* Money to Receive */}
+        <div
+          onClick={() => setActiveTab('lend_borrow')}
+          className="stationery-card p-4 flex flex-col cursor-pointer hover:border-theme-accent transition-all"
+        >
+          <span className="text-[10px] font-bold text-theme-muted uppercase tracking-widest font-sans flex items-center justify-between">
+            <span>Money to Receive</span>
+            <ArrowUpRight className="w-3.5 h-3.5 text-theme-muted" />
+          </span>
+          <span className="text-lg font-serif font-bold text-theme-text mt-1">
+            {formatCurrency(toReceive, profile.currency)}
+          </span>
+        </div>
+
+        {/* Money to Pay */}
+        <div
+          onClick={() => setActiveTab('lend_borrow')}
+          className="stationery-card p-4 flex flex-col cursor-pointer hover:border-theme-terracotta transition-all"
+        >
+          <span className="text-[10px] font-bold text-theme-terracotta uppercase tracking-widest font-sans flex items-center justify-between">
+            <span>Money to Pay</span>
+            <ArrowDownLeft className="w-3.5 h-3.5 text-theme-terracotta" />
+          </span>
+          <span className="text-lg font-serif font-bold text-theme-terracotta mt-1">
+            {formatCurrency(toPay, profile.currency)}
+          </span>
+        </div>
+
+        {/* Upcoming Bills */}
+        <div
+          onClick={() => setActiveTab('recurring')}
+          className="stationery-card p-4 flex flex-col cursor-pointer hover:border-theme-accent transition-all"
+        >
+          <span className="text-[10px] font-bold text-theme-muted uppercase tracking-widest font-sans flex items-center justify-between">
+            <span>Upcoming Bills</span>
+            <Repeat className="w-3.5 h-3.5 text-theme-muted" />
+          </span>
+          <span className="text-lg font-serif font-bold text-theme-text mt-1">
+            {formatCurrency(pendingBillsTotal, profile.currency)}
+          </span>
+          <span className="text-[10px] text-theme-muted font-serif italic">{pendingBills.length} pending</span>
+        </div>
+
+        {/* Savings Goals */}
+        <div
+          onClick={() => setActiveTab('goals')}
+          className="stationery-card p-4 flex flex-col cursor-pointer hover:border-theme-accent transition-all"
+        >
+          <span className="text-[10px] font-bold text-theme-muted uppercase tracking-widest font-sans flex items-center justify-between">
+            <span>Savings Progress</span>
+            <Target className="w-3.5 h-3.5 text-theme-muted" />
+          </span>
+          <span className="text-lg font-serif font-bold text-theme-text mt-1">
+            {overallGoalPct}%
+          </span>
+          <span className="text-[10px] text-theme-muted font-serif italic">{goals.length} goals</span>
+        </div>
+      </div>
 
       {/* Categories Bar */}
       {categoryBreakdown.length > 0 && (
@@ -204,9 +288,9 @@ export const HomeDashboard: React.FC = () => {
           )}
         </div>
 
-        {/* Sidebar Widgets: Upcoming Recurring & Goals */}
+        {/* Sidebar Widgets: Upcoming Bills & Goals */}
         <div className="space-y-6">
-          {/* Upcoming Recurring */}
+          {/* Upcoming Bills */}
           <div className="stationery-card p-5 relative">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold text-theme-muted uppercase tracking-widest flex items-center space-x-1.5 font-sans">
@@ -223,7 +307,7 @@ export const HomeDashboard: React.FC = () => {
 
             {upcomingRecurring.length === 0 ? (
               <div className="py-4 text-center">
-                <p className="text-xs text-theme-muted font-serif italic">No recurring bills set yet.</p>
+                <p className="text-xs text-theme-muted font-serif italic">No upcoming bills.</p>
                 <button
                   onClick={() => setActiveTab('recurring')}
                   className="mt-2 text-xs font-bold text-theme-text hover:underline"

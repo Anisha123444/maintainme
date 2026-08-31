@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { SavingsGoal } from '../../types';
 import { formatCurrency } from '../../utils/dateUtils';
 import { Modal } from '../common/Modal';
-import { Target, Plus, Sparkles, Edit2, Trash2, Calendar, Coins } from 'lucide-react';
+import { Target, Plus, Sparkles, Edit2, Trash2, Calendar, Coins, CheckCircle2 } from 'lucide-react';
 
 export const GoalsView: React.FC = () => {
   const { profile, goals, addGoal, updateGoal, deleteGoal, addGoalFunds } = useApp();
@@ -21,6 +21,7 @@ export const GoalsView: React.FC = () => {
   const [target, setTarget] = useState('');
   const [current, setCurrent] = useState('');
   const [deadline, setDeadline] = useState('');
+  const [note, setNote] = useState('');
 
   const handleOpenAdd = () => {
     setEditingGoal(null);
@@ -28,6 +29,7 @@ export const GoalsView: React.FC = () => {
     setTarget('');
     setCurrent('0');
     setDeadline('');
+    setNote('');
     setIsModalOpen(true);
   };
 
@@ -37,6 +39,7 @@ export const GoalsView: React.FC = () => {
     setTarget(String(g.target));
     setCurrent(String(g.current));
     setDeadline(g.deadline || '');
+    setNote(g.note || '');
     setIsModalOpen(true);
   };
 
@@ -54,6 +57,8 @@ export const GoalsView: React.FC = () => {
         target: numTarget,
         current: numCurrent,
         deadline,
+        note: note.trim(),
+        status: numCurrent >= numTarget ? 'completed' : editingGoal.status || 'in_progress',
       });
     } else {
       await addGoal({
@@ -61,9 +66,20 @@ export const GoalsView: React.FC = () => {
         target: numTarget,
         current: numCurrent,
         deadline,
+        note: note.trim(),
+        status: numCurrent >= numTarget ? 'completed' : 'in_progress',
       });
     }
     setIsModalOpen(false);
+  };
+
+  const handleMarkCompleted = async (g: SavingsGoal) => {
+    await updateGoal({
+      ...g,
+      current: g.target,
+      status: 'completed',
+    });
+    setCelebrationGoal(g);
   };
 
   const handleContribute = async (e: React.FormEvent) => {
@@ -114,10 +130,10 @@ export const GoalsView: React.FC = () => {
             <Target className="w-5 h-5" />
           </div>
           <h3 className="text-lg font-serif font-bold text-theme-text">
-            Give your money something to look forward to.
+            Nothing saved for a goal yet.
           </h3>
           <p className="text-xs text-theme-muted font-serif italic max-w-xs mx-auto">
-            Create goals for Emergency Fund, Laptop, Trip, or Savings.
+            Give your money something to look forward to.
           </p>
           <button
             onClick={handleOpenAdd}
@@ -130,21 +146,34 @@ export const GoalsView: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {goals.map((g) => {
             const pct = Math.min(100, Math.round((g.current / (g.target || 1)) * 100));
+            const isCompleted = g.status === 'completed' || pct >= 100;
+            const remaining = Math.max(0, g.target - g.current);
 
             return (
               <div
                 key={g.id}
-                className="stationery-card p-6 flex flex-col justify-between space-y-4 hover:shadow-paper-hover transition-shadow relative overflow-hidden"
+                className={`stationery-card p-6 flex flex-col justify-between space-y-4 hover:shadow-paper-hover transition-shadow relative overflow-hidden ${
+                  isCompleted ? 'border-2 border-sage-300 bg-sage-100/30' : ''
+                }`}
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="text-xl font-serif font-bold text-theme-text">{g.name}</h3>
+                    <div className="flex items-center space-x-2">
+                      <h3 className="text-xl font-serif font-bold text-theme-text">{g.name}</h3>
+                      {isCompleted && (
+                        <span className="px-2 py-0.5 bg-sage-100 text-sage-500 font-bold rounded-full text-[10px] flex items-center space-x-1 border border-sage-300">
+                          <CheckCircle2 className="w-3 h-3 text-sage-400" />
+                          <span>Completed</span>
+                        </span>
+                      )}
+                    </div>
                     {g.deadline && (
                       <p className="text-xs text-theme-muted font-medium flex items-center space-x-1 mt-0.5 font-mono">
                         <Calendar className="w-3.5 h-3.5 text-theme-muted" />
-                        <span>Deadline: {g.deadline}</span>
+                        <span>Target Date: {g.deadline}</span>
                       </p>
                     )}
+                    {g.note && <p className="text-xs text-theme-muted font-serif italic mt-1">{g.note}</p>}
                   </div>
 
                   <div className="flex items-center space-x-1">
@@ -183,20 +212,34 @@ export const GoalsView: React.FC = () => {
 
                 <div className="pt-3 border-t border-theme-border flex items-center justify-between">
                   <span className="text-xs font-semibold text-theme-muted font-serif italic">
-                    {pct >= 100 ? 'Goal Achieved!' : `${formatCurrency(g.target - g.current, profile.currency)} remaining`}
+                    {isCompleted ? 'Goal Achieved!' : `${formatCurrency(remaining, profile.currency)} remaining`}
                   </span>
 
-                  <button
-                    onClick={() => {
-                      setFundingGoal(g);
-                      setFundAmount('');
-                      setIsAddFundsOpen(true);
-                    }}
-                    className="px-3.5 py-1.5 bg-theme-primary hover:bg-theme-accent text-theme-text border border-theme-border font-bold text-xs rounded-xl flex items-center space-x-1.5 transition-colors shadow-2xs"
-                  >
-                    <Coins className="w-3.5 h-3.5 text-theme-muted" />
-                    <span>+ Add Savings</span>
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    {!isCompleted && (
+                      <>
+                        <button
+                          onClick={() => handleMarkCompleted(g)}
+                          className="px-2.5 py-1.5 bg-theme-card hover:bg-theme-highlight text-theme-muted font-bold text-xs rounded-xl border border-theme-border"
+                          title="Mark Completed"
+                        >
+                          Mark Done
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setFundingGoal(g);
+                            setFundAmount('');
+                            setIsAddFundsOpen(true);
+                          }}
+                          className="px-3.5 py-1.5 bg-theme-primary hover:bg-theme-accent text-theme-text border border-theme-border font-bold text-xs rounded-xl flex items-center space-x-1.5 transition-colors shadow-2xs"
+                        >
+                          <Coins className="w-3.5 h-3.5 text-theme-muted" />
+                          <span>+ Add Money</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -220,7 +263,7 @@ export const GoalsView: React.FC = () => {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Laptop, Emergency Fund, Trip..."
+              placeholder="e.g. New Laptop, Emergency Fund, Kyoto Trip..."
               className="w-full px-4 py-2.5 bg-theme-bg border border-theme-border rounded-xl text-sm font-bold text-theme-text outline-none"
             />
           </div>
@@ -235,7 +278,7 @@ export const GoalsView: React.FC = () => {
                 required
                 value={target}
                 onChange={(e) => setTarget(e.target.value)}
-                placeholder="70000"
+                placeholder="60000"
                 className="w-full px-4 py-2.5 bg-theme-bg border border-theme-border rounded-xl text-sm font-bold text-theme-text outline-none"
               />
             </div>
@@ -248,7 +291,7 @@ export const GoalsView: React.FC = () => {
                 type="number"
                 value={current}
                 onChange={(e) => setCurrent(e.target.value)}
-                placeholder="0"
+                placeholder="18000"
                 className="w-full px-4 py-2.5 bg-theme-bg border border-theme-border rounded-xl text-sm font-bold text-theme-text outline-none"
               />
             </div>
@@ -256,13 +299,26 @@ export const GoalsView: React.FC = () => {
 
           <div>
             <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1 font-sans">
-              Deadline (Optional)
+              Target Date (Optional)
             </label>
             <input
               type="date"
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
               className="w-full px-3 py-2 bg-theme-bg border border-theme-border rounded-xl text-xs font-semibold text-theme-text outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-theme-muted uppercase tracking-wider mb-1 font-sans">
+              Note (Optional)
+            </label>
+            <input
+              type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="e.g. Savings for M3 MacBook Pro..."
+              className="w-full px-4 py-2 bg-theme-bg border border-theme-border rounded-xl text-xs font-medium text-theme-text outline-none"
             />
           </div>
 
@@ -280,7 +336,7 @@ export const GoalsView: React.FC = () => {
       <Modal
         isOpen={isAddFundsOpen}
         onClose={() => setIsAddFundsOpen(false)}
-        title={`Add Savings to ${fundingGoal?.name}`}
+        title={`Add Money to ${fundingGoal?.name}`}
       >
         <form onSubmit={handleContribute} className="space-y-4">
           <div>
@@ -311,7 +367,7 @@ export const GoalsView: React.FC = () => {
       <Modal
         isOpen={!!celebrationGoal}
         onClose={() => setCelebrationGoal(null)}
-        title="Goal Reached!"
+        title="Goal Completed!"
       >
         <div className="text-center py-4 space-y-3">
           <div className="text-4xl">🌱 🪙</div>

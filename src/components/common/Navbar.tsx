@@ -10,6 +10,7 @@ import {
   Plus,
   Repeat,
   Target,
+  HandCoins,
 } from 'lucide-react';
 import { MMLogo } from './MMLogo';
 
@@ -77,6 +78,18 @@ export const Navbar: React.FC = () => {
           </div>
 
           <button
+            onClick={() => setActiveTab('lend_borrow')}
+            className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+              activeTab === 'lend_borrow'
+                ? 'bg-theme-primary text-theme-text shadow-2xs border border-theme-border font-extrabold'
+                : 'text-theme-muted hover:bg-theme-highlight hover:text-theme-text'
+            }`}
+          >
+            <HandCoins className="w-4 h-4 text-theme-muted" />
+            <span>Lend & Borrow</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('recurring')}
             className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
               activeTab === 'recurring'
@@ -85,7 +98,7 @@ export const Navbar: React.FC = () => {
             }`}
           >
             <Repeat className="w-4 h-4 text-theme-muted" />
-            <span>Recurring</span>
+            <span>Upcoming Bills</span>
           </button>
 
           <button
@@ -133,7 +146,17 @@ export const Navbar: React.FC = () => {
             </button>
           </div>
 
-          {navItems.slice(2).map((item) => {
+          <button
+            onClick={() => setActiveTab('lend_borrow')}
+            className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
+              activeTab === 'lend_borrow' ? 'text-theme-text font-bold' : 'text-theme-muted'
+            }`}
+          >
+            <HandCoins className={`w-5 h-5 ${activeTab === 'lend_borrow' ? 'stroke-[2.5]' : ''}`} />
+            <span className="text-[10px] mt-0.5 font-sans">Settle</span>
+          </button>
+
+          {navItems.slice(2, 4).map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (

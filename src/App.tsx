@@ -11,6 +11,7 @@ import { InsightsView } from './components/insights/InsightsView';
 import { SettingsView } from './components/settings/SettingsView';
 import { RecurringView } from './components/recurring/RecurringView';
 import { GoalsView } from './components/goals/GoalsView';
+import { LendBorrowView } from './components/lendborrow/LendBorrowView';
 
 export const MainAppContent: React.FC = () => {
   const { profile, activeTab, isLoading, hasEnteredLanding } = useApp();
@@ -50,6 +51,7 @@ export const MainAppContent: React.FC = () => {
         {activeTab === 'settings' && <SettingsView />}
         {activeTab === 'recurring' && <RecurringView />}
         {activeTab === 'goals' && <GoalsView />}
+        {activeTab === 'lend_borrow' && <LendBorrowView />}
       </main>
 
       {/* Global Add / Edit Expense Bottom Sheet Modal */}

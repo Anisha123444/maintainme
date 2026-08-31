@@ -1,5 +1,5 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
-import { Expense, RecurringPayment, SavingsGoal } from '../types';
+import { BorrowRecord, Expense, LendRecord, RecurringPayment, SavingsGoal } from '../types';
 
 interface MMDatabase extends DBSchema {
   expenses: {
@@ -15,10 +15,18 @@ interface MMDatabase extends DBSchema {
     key: string;
     value: SavingsGoal;
   };
+  lend_records: {
+    key: string;
+    value: LendRecord;
+  };
+  borrow_records: {
+    key: string;
+    value: BorrowRecord;
+  };
 }
 
 const DB_NAME = 'MM_Finance_DB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase<MMDatabase>> | null = null;
 
@@ -33,7 +41,7 @@ export const getDB = () => {
           expenseStore.createIndex('by-category', 'category');
         }
 
-        // Recurring store
+        // Recurring (Bills) store
         if (!db.objectStoreNames.contains('recurring')) {
           db.createObjectStore('recurring', { keyPath: 'id' });
         }
@@ -41,6 +49,16 @@ export const getDB = () => {
         // Goals store
         if (!db.objectStoreNames.contains('goals')) {
           db.createObjectStore('goals', { keyPath: 'id' });
+        }
+
+        // Lend Records store
+        if (!db.objectStoreNames.contains('lend_records')) {
+          db.createObjectStore('lend_records', { keyPath: 'id' });
+        }
+
+        // Borrow Records store
+        if (!db.objectStoreNames.contains('borrow_records')) {
+          db.createObjectStore('borrow_records', { keyPath: 'id' });
         }
       },
     });
@@ -70,7 +88,7 @@ export const dbDeleteExpense = async (id: string): Promise<void> => {
   await db.delete('expenses', id);
 };
 
-// Recurring Operations
+// Recurring (Bills) Operations
 export const dbGetRecurring = async (): Promise<RecurringPayment[]> => {
   const db = await getDB();
   return await db.getAll('recurring');
@@ -112,14 +130,58 @@ export const dbDeleteGoal = async (id: string): Promise<void> => {
   await db.delete('goals', id);
 };
 
-// Clear All Data
+// Lend Record Operations
+export const dbGetLendRecords = async (): Promise<LendRecord[]> => {
+  const db = await getDB();
+  return await db.getAll('lend_records');
+};
+
+export const dbAddLendRecord = async (record: LendRecord): Promise<void> => {
+  const db = await getDB();
+  await db.put('lend_records', record);
+};
+
+export const dbUpdateLendRecord = async (record: LendRecord): Promise<void> => {
+  const db = await getDB();
+  await db.put('lend_records', record);
+};
+
+export const dbDeleteLendRecord = async (id: string): Promise<void> => {
+  const db = await getDB();
+  await db.delete('lend_records', id);
+};
+
+// Borrow Record Operations
+export const dbGetBorrowRecords = async (): Promise<BorrowRecord[]> => {
+  const db = await getDB();
+  return await db.getAll('borrow_records');
+};
+
+export const dbAddBorrowRecord = async (record: BorrowRecord): Promise<void> => {
+  const db = await getDB();
+  await db.put('borrow_records', record);
+};
+
+export const dbUpdateBorrowRecord = async (record: BorrowRecord): Promise<void> => {
+  const db = await getDB();
+  await db.put('borrow_records', record);
+};
+
+export const dbDeleteBorrowRecord = async (id: string): Promise<void> => {
+  const db = await getDB();
+  await db.delete('borrow_records', id);
+};
+
+// Clear All Data Across All Stores
 export const dbClearAllData = async (): Promise<void> => {
   const db = await getDB();
-  const tx = db.transaction(['expenses', 'recurring', 'goals'], 'readwrite');
+  const tx = db.transaction(['expenses', 'recurring', 'goals', 'lend_records', 'borrow_records'], 'readwrite');
   await Promise.all([
     tx.objectStore('expenses').clear(),
     tx.objectStore('recurring').clear(),
     tx.objectStore('goals').clear(),
+    tx.objectStore('lend_records').clear(),
+    tx.objectStore('borrow_records').clear(),
     tx.done,
   ]);
 };
@@ -128,11 +190,13 @@ export const dbClearAllData = async (): Promise<void> => {
 export const dbRestoreAllData = async (
   expenses: Expense[],
   recurring: RecurringPayment[],
-  goals: SavingsGoal[]
+  goals: SavingsGoal[],
+  lendRecords: LendRecord[] = [],
+  borrowRecords: BorrowRecord[] = []
 ): Promise<void> => {
   await dbClearAllData();
   const db = await getDB();
-  const tx = db.transaction(['expenses', 'recurring', 'goals'], 'readwrite');
+  const tx = db.transaction(['expenses', 'recurring', 'goals', 'lend_records', 'borrow_records'], 'readwrite');
   
   for (const exp of expenses) {
     await tx.objectStore('expenses').put(exp);
@@ -142,6 +206,12 @@ export const dbRestoreAllData = async (
   }
   for (const goal of goals) {
     await tx.objectStore('goals').put(goal);
+  }
+  for (const lend of lendRecords) {
+    await tx.objectStore('lend_records').put(lend);
+  }
+  for (const borrow of borrowRecords) {
+    await tx.objectStore('borrow_records').put(borrow);
   }
   await tx.done;
 };

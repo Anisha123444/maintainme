@@ -2,29 +2,38 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   AppearanceMode,
   BackupData,
+  BorrowRecord,
   Expense,
-  Frequency,
-  PaymentMethod,
+  LendRecord,
   RecurringPayment,
+  Repayment,
   SavingsGoal,
   Settings,
   TabType,
   UserProfile,
 } from '../types';
 import {
+  dbAddBorrowRecord,
   dbAddExpense,
   dbAddGoal,
+  dbAddLendRecord,
   dbAddRecurring,
   dbClearAllData,
+  dbDeleteBorrowRecord,
   dbDeleteExpense,
   dbDeleteGoal,
+  dbDeleteLendRecord,
   dbDeleteRecurring,
+  dbGetBorrowRecords,
   dbGetExpenses,
   dbGetGoals,
+  dbGetLendRecords,
   dbGetRecurring,
   dbRestoreAllData,
+  dbUpdateBorrowRecord,
   dbUpdateExpense,
   dbUpdateGoal,
+  dbUpdateLendRecord,
   dbUpdateRecurring,
 } from '../db/indexedDB';
 
@@ -53,20 +62,36 @@ interface AppContextType {
   expenses: Expense[];
   recurring: RecurringPayment[];
   goals: SavingsGoal[];
+  lendRecords: LendRecord[];
+  borrowRecords: BorrowRecord[];
 
-  // CRUD Actions
+  // Expense CRUD Actions
   addExpense: (expense: Omit<Expense, 'id' | 'createdAt'>) => Promise<void>;
   updateExpense: (expense: Expense) => Promise<void>;
   deleteExpense: (id: string) => Promise<void>;
 
+  // Recurring (Bills) CRUD Actions
   addRecurring: (item: Omit<RecurringPayment, 'id' | 'createdAt'>) => Promise<void>;
   updateRecurring: (item: RecurringPayment) => Promise<void>;
   deleteRecurring: (id: string) => Promise<void>;
 
+  // Goals CRUD Actions
   addGoal: (goal: Omit<SavingsGoal, 'id' | 'createdAt'>) => Promise<void>;
   updateGoal: (goal: SavingsGoal) => Promise<void>;
   deleteGoal: (id: string) => Promise<void>;
   addGoalFunds: (id: string, amount: number) => Promise<void>;
+
+  // Lend Record Actions
+  addLendRecord: (record: Omit<LendRecord, 'id' | 'createdAt' | 'returnedAmount' | 'status' | 'repayments'>) => Promise<void>;
+  updateLendRecord: (record: LendRecord) => Promise<void>;
+  deleteLendRecord: (id: string) => Promise<void>;
+  addLendRepayment: (id: string, amount: number, date: string, note?: string) => Promise<void>;
+
+  // Borrow Record Actions
+  addBorrowRecord: (record: Omit<BorrowRecord, 'id' | 'createdAt' | 'paidAmount' | 'status' | 'repayments'>) => Promise<void>;
+  updateBorrowRecord: (record: BorrowRecord) => Promise<void>;
+  deleteBorrowRecord: (id: string) => Promise<void>;
+  addBorrowRepayment: (id: string, amount: number, date: string, note?: string) => Promise<void>;
 
   // Data Save / Restore / Clear
   saveDataToJson: () => string;
@@ -123,10 +148,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return DEFAULT_SETTINGS;
   });
 
-  // IndexedDB States (Clean 100% empty!)
+  // IndexedDB States
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [recurring, setRecurring] = useState<RecurringPayment[]>([]);
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
+  const [lendRecords, setLendRecords] = useState<LendRecord[]>([]);
+  const [borrowRecords, setBorrowRecords] = useState<BorrowRecord[]>([]);
 
   // Apply Light / Dark class to document root
   useEffect(() => {
@@ -145,22 +172,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         let loadedExpenses = await dbGetExpenses();
         let loadedRecurring = await dbGetRecurring();
         let loadedGoals = await dbGetGoals();
+        let loadedLend = await dbGetLendRecords();
+        let loadedBorrow = await dbGetBorrowRecords();
 
         // Check if any old sample/bot items exist and purge them from IndexedDB!
         const hasSampleExpenses = loadedExpenses.some((e) => e.id.startsWith('sample-'));
-        const hasSampleRecurring = loadedRecurring.some((r) => r.id.startsWith('rec-'));
-        const hasSampleGoals = loadedGoals.some((g) => g.id.startsWith('goal-'));
+        const hasSampleRecurring = loadedRecurring.some((r) => r.id.startsWith('rec-') && r.id.includes('sample'));
+        const hasSampleGoals = loadedGoals.some((g) => g.id.startsWith('goal-') && g.id.includes('sample'));
 
         if (hasSampleExpenses || hasSampleRecurring || hasSampleGoals) {
           loadedExpenses = loadedExpenses.filter((e) => !e.id.startsWith('sample-'));
-          loadedRecurring = loadedRecurring.filter((r) => !r.id.startsWith('rec-'));
-          loadedGoals = loadedGoals.filter((g) => !g.id.startsWith('goal-'));
-          await dbRestoreAllData(loadedExpenses, loadedRecurring, loadedGoals);
+          loadedRecurring = loadedRecurring.filter((r) => !r.id.includes('sample'));
+          loadedGoals = loadedGoals.filter((g) => !g.id.includes('sample'));
+          await dbRestoreAllData(loadedExpenses, loadedRecurring, loadedGoals, loadedLend, loadedBorrow);
         }
 
         setExpenses(loadedExpenses);
         setRecurring(loadedRecurring);
         setGoals(loadedGoals);
+        setLendRecords(loadedLend);
+        setBorrowRecords(loadedBorrow);
       } catch (err) {
         console.error('Error loading IndexedDB data:', err);
       } finally {
@@ -213,11 +244,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setExpenses((prev) => prev.filter((e) => e.id !== id));
   };
 
-  // Recurring CRUD
+  // Recurring (Bills) CRUD
   const addRecurringAction = async (item: Omit<RecurringPayment, 'id' | 'createdAt'>) => {
     const newItem: RecurringPayment = {
       ...item,
       id: 'rec-' + Date.now(),
+      status: item.status || 'pending',
       createdAt: Date.now(),
     };
     await dbAddRecurring(newItem);
@@ -239,6 +271,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newGoal: SavingsGoal = {
       ...goal,
       id: 'goal-' + Date.now(),
+      status: goal.status || 'in_progress',
       createdAt: Date.now(),
     };
     await dbAddGoal(newGoal);
@@ -258,21 +291,145 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addGoalFunds = async (id: string, amount: number) => {
     const goal = goals.find((g) => g.id === id);
     if (!goal) return;
-    const updated = { ...goal, current: Math.min(goal.target, goal.current + amount) };
+    const updatedCurrent = goal.current + amount;
+    const isFinished = updatedCurrent >= goal.target;
+    const updated: SavingsGoal = {
+      ...goal,
+      current: updatedCurrent,
+      status: isFinished ? 'completed' : goal.status || 'in_progress',
+    };
     await dbUpdateGoal(updated);
     setGoals((prev) => prev.map((g) => (g.id === id ? updated : g)));
   };
 
-  // Save My Data (Export Backup JSON)
+  // Lend Record Actions
+  const addLendRecord = async (
+    data: Omit<LendRecord, 'id' | 'createdAt' | 'returnedAmount' | 'status' | 'repayments'>
+  ) => {
+    const newRecord: LendRecord = {
+      ...data,
+      id: 'lend-' + Date.now(),
+      returnedAmount: 0,
+      status: 'pending',
+      repayments: [],
+      createdAt: Date.now(),
+    };
+    await dbAddLendRecord(newRecord);
+    setLendRecords((prev) => [newRecord, ...prev]);
+  };
+
+  const updateLendRecord = async (record: LendRecord) => {
+    await dbUpdateLendRecord(record);
+    setLendRecords((prev) => prev.map((l) => (l.id === record.id ? record : l)));
+  };
+
+  const deleteLendRecord = async (id: string) => {
+    await dbDeleteLendRecord(id);
+    setLendRecords((prev) => prev.filter((l) => l.id !== id));
+  };
+
+  const addLendRepayment = async (id: string, amount: number, date: string, note?: string) => {
+    const record = lendRecords.find((l) => l.id === id);
+    if (!record) return;
+
+    const repayment: Repayment = {
+      id: 'rep-' + Date.now(),
+      amount,
+      date,
+      note,
+    };
+
+    const updatedRepayments = [repayment, ...(record.repayments || [])];
+    const newReturned = (record.returnedAmount || 0) + amount;
+    let newStatus: LendRecord['status'] = 'pending';
+
+    if (newReturned >= record.amount) {
+      newStatus = 'fully_returned';
+    } else if (newReturned > 0) {
+      newStatus = 'partially_returned';
+    }
+
+    const updated: LendRecord = {
+      ...record,
+      returnedAmount: newReturned,
+      status: newStatus,
+      repayments: updatedRepayments,
+    };
+
+    await dbUpdateLendRecord(updated);
+    setLendRecords((prev) => prev.map((l) => (l.id === id ? updated : l)));
+  };
+
+  // Borrow Record Actions
+  const addBorrowRecord = async (
+    data: Omit<BorrowRecord, 'id' | 'createdAt' | 'paidAmount' | 'status' | 'repayments'>
+  ) => {
+    const newRecord: BorrowRecord = {
+      ...data,
+      id: 'borrow-' + Date.now(),
+      paidAmount: 0,
+      status: 'pending',
+      repayments: [],
+      createdAt: Date.now(),
+    };
+    await dbAddBorrowRecord(newRecord);
+    setBorrowRecords((prev) => [newRecord, ...prev]);
+  };
+
+  const updateBorrowRecord = async (record: BorrowRecord) => {
+    await dbUpdateBorrowRecord(record);
+    setBorrowRecords((prev) => prev.map((b) => (b.id === record.id ? record : b)));
+  };
+
+  const deleteBorrowRecord = async (id: string) => {
+    await dbDeleteBorrowRecord(id);
+    setBorrowRecords((prev) => prev.filter((b) => b.id !== id));
+  };
+
+  const addBorrowRepayment = async (id: string, amount: number, date: string, note?: string) => {
+    const record = borrowRecords.find((b) => b.id === id);
+    if (!record) return;
+
+    const repayment: Repayment = {
+      id: 'rep-' + Date.now(),
+      amount,
+      date,
+      note,
+    };
+
+    const updatedRepayments = [repayment, ...(record.repayments || [])];
+    const newPaid = (record.paidAmount || 0) + amount;
+    let newStatus: BorrowRecord['status'] = 'pending';
+
+    if (newPaid >= record.amount) {
+      newStatus = 'fully_paid';
+    } else if (newPaid > 0) {
+      newStatus = 'partially_paid';
+    }
+
+    const updated: BorrowRecord = {
+      ...record,
+      paidAmount: newPaid,
+      status: newStatus,
+      repayments: updatedRepayments,
+    };
+
+    await dbUpdateBorrowRecord(updated);
+    setBorrowRecords((prev) => prev.map((b) => (b.id === id ? updated : b)));
+  };
+
+  // Save My Data (Export Backup JSON with all 5 stores)
   const saveDataToJson = (): string => {
     const backup: BackupData = {
-      version: '1.0.0',
+      version: '1.1.0',
       timestamp: new Date().toISOString(),
       profile,
       settings,
       expenses,
       recurring,
       goals,
+      lendRecords,
+      borrowRecords,
     };
     return JSON.stringify(backup, null, 2);
   };
@@ -289,7 +446,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return { success: false, message: 'Missing required MM data structures in backup file.' };
       }
 
-      await dbRestoreAllData(data.expenses || [], data.recurring || [], data.goals || []);
+      await dbRestoreAllData(
+        data.expenses || [],
+        data.recurring || [],
+        data.goals || [],
+        data.lendRecords || [],
+        data.borrowRecords || []
+      );
 
       if (data.profile) {
         setProfile(data.profile);
@@ -303,6 +466,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setExpenses(data.expenses || []);
       setRecurring(data.recurring || []);
       setGoals(data.goals || []);
+      setLendRecords(data.lendRecords || []);
+      setBorrowRecords(data.borrowRecords || []);
 
       return { success: true, message: 'Your MM data has been restored successfully!' };
     } catch (err) {
@@ -310,7 +475,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Clear All Data
+  // Clear All Data Across All Stores
   const clearAllData = async () => {
     await dbClearAllData();
     localStorage.removeItem('mm_profile');
@@ -322,6 +487,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setExpenses([]);
     setRecurring([]);
     setGoals([]);
+    setLendRecords([]);
+    setBorrowRecords([]);
   };
 
   return (
@@ -344,6 +511,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         expenses,
         recurring,
         goals,
+        lendRecords,
+        borrowRecords,
         addExpense,
         updateExpense: updateExpenseAction,
         deleteExpense: deleteExpenseAction,
@@ -354,6 +523,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateGoal: updateGoalAction,
         deleteGoal: deleteGoalAction,
         addGoalFunds,
+        addLendRecord,
+        updateLendRecord,
+        deleteLendRecord,
+        addLendRepayment,
+        addBorrowRecord,
+        updateBorrowRecord,
+        deleteBorrowRecord,
+        addBorrowRepayment,
         saveDataToJson,
         restoreDataFromJson,
         clearAllData,
